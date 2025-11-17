@@ -90,16 +90,17 @@ const ResumeBuilder = () => {
   }, [resumeId]);
 
   const changeResumeVisibility = async () => {
+     const updatedResumeData = { ...resumeData, public: !resumeData.public };
      try {
       const formData = new FormData();
       formData.append('resumeId', resumeId);
-      formData.append('resumeData', JSON.stringify({public: !resumeData.public}));
+      formData.append('resumeData', JSON.stringify(updatedResumeData));
       const {data} = await api.put(`/api/resumes/update`, formData, {
         headers: {
           Authorization: token,
         },
       });
-      setResumeData({...resumeData, public: !resumeData.public});
+      setResumeData(updatedResumeData);
       toast.success(data.message);
      }
      catch (error) {
@@ -122,43 +123,77 @@ const ResumeBuilder = () => {
     window.print();
   }
 
-  const saveResume = async () => {
-    try {
-      let updatedResumeData = structuredClone(resumeData);
+//   const saveResume = async () => {
+//     try {
+//       let updatedResumeData = structuredClone(resumeData);
 
-      // remove image from updatedResumeData
-      if(typeof resumeData.personal_info.image === 'object') {
-        delete updatedResumeData.personal_info.image;
-      }
+//       // remove image from updatedResumeData
+//       if(typeof updatedResumeData.personal_info.image === 'object') {
+//         delete updatedResumeData.personal_info.image;
+//       }
 
-      const formData = new FormData();
-      formData.append('resumeId', resumeId);
-      formData.append('resumeData', JSON.stringify(updatedResumeData));
-      removebackground && formData.append('removeBackground', 'yes');
-      typeof resumeData.personal_info.image === 'object' &&
-      formData.append('image', resumeData.personal_info.image);
-      const {data} = await api.put(`/api/resumes/update`, formData, {
-        headers: {
-          Authorization: token,
-        },
-      });
-      setResumeData(prev => ({
-  ...prev,
-  ...data.resume,
-  template: data.resume?.template ?? prev.template,
-  accent_color: data.resume?.accent_color ?? prev.accent_color,
-  personal_info: data.resume?.personal_info ?? prev.personal_info,
-  experience: data.resume?.experience ?? prev.experience,
-  education: data.resume?.education ?? prev.education,
-  project: data.resume?.project ?? prev.project,
-  skills: data.resume?.skills ?? prev.skills,
-}));
+//       const formData = new FormData();
+//       formData.append('resumeId', resumeId);
+//       formData.append('resumeData', JSON.stringify(updatedResumeData));
+//       removebackground && formData.append('removeBackground', 'yes');
+//       typeof resumeData.personal_info.image === 'object' &&
+//       formData.append('image', resumeData.personal_info.image);
+//       const {data} = await api.put(`/api/resumes/update`, formData, {
+//         headers: {
+//           Authorization: token,
+//         },
+//       });
+//       setResumeData(prev => ({
+//   ...prev,
+//   ...data.resume,
+//   template: data.resume?.template ?? prev.template,
+//   accent_color: data.resume?.accent_color ?? prev.accent_color,
+//   personal_info: data.resume?.personal_info ?? prev.personal_info,
+//   experience: data.resume?.experience ?? prev.experience,
+//   education: data.resume?.education ?? prev.education,
+//   project: data.resume?.project ?? prev.project,
+//   skills: data.resume?.skills ?? prev.skills,
+// }));
 
-      toast.success(data.message);
-    } catch (error) {
-      console.error("Error saving resume", error);
+//       toast.success(data.message);
+//     } catch (error) {
+//       console.error("Error saving resume", error);
+//     }
+//   }
+
+const saveResume = async () => {
+  try {
+    const updatedResumeData = structuredClone(resumeData);
+
+    // Remove local image object; backend expects URL instead
+    if (typeof updatedResumeData.personal_info.image === "object") {
+      updatedResumeData.personal_info.image = ""; // or replace with uploaded image URL
     }
+
+    const formData = new FormData();
+    formData.append('resumeId', resumeId);
+    formData.append('resumeData', JSON.stringify(updatedResumeData));
+
+    if (removebackground) formData.append('removeBackground', 'yes');
+
+    const { data } = await api.put(`/api/resumes/update`, formData, {
+      headers: {
+        Authorization: token,
+      },
+    });
+
+    // Update local state with backend response
+    setResumeData(prev => ({
+      ...prev,
+      ...data.resume,
+    }));
+
+    toast.success(data.message);
+  } catch (error) {
+    console.error("Error saving resume", error);
+    toast.error("Failed to save resume.");
   }
+};
 
 
   return (
