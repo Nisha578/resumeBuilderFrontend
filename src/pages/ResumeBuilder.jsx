@@ -109,8 +109,8 @@ const ResumeBuilder = () => {
   }
 
   const handleShare = () => {
-    // const frontendUrl = window.location.href.split('/app/')[0];
-    const frontendUrl = window.location.origin;
+    const frontendUrl = window.location.href.split('/app/')[0];
+    // const frontendUrl = window.location.origin;
     const resumeUrl = frontendUrl + '/view/' +resumeId;
 
     if(navigator.share) {
